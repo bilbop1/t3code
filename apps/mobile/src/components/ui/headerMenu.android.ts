@@ -1,8 +1,10 @@
-import type { MenuAction } from "@react-native-menu/menu";
 import type { AppBarMenuItem } from "./AppBar.types";
+import type { MenuActionWithLeading } from "./Menu.types";
 
-export function androidHeaderMenuActions(items: ReadonlyArray<AppBarMenuItem>): MenuAction[] {
-  return items.flatMap((item): MenuAction[] =>
+export function androidHeaderMenuActions(
+  items: ReadonlyArray<AppBarMenuItem>,
+): MenuActionWithLeading[] {
+  return items.flatMap((item): MenuActionWithLeading[] =>
     "items" in item
       ? item.inline && !item.title
         ? androidHeaderMenuActions(item.items)
@@ -21,6 +23,7 @@ export function androidHeaderMenuActions(items: ReadonlyArray<AppBarMenuItem>): 
             subtitle: item.subtitle,
             image: item.icon,
             imageColor: item.iconColor,
+            ...(item.renderLeading ? { renderLeading: item.renderLeading } : {}),
             state: item.selected ? "on" : undefined,
             attributes:
               item.disabled || item.destructive

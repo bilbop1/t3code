@@ -34,6 +34,7 @@ import { useSelectWorkspaceDetail } from "../layout/workspace/useSelectWorkspace
 import { WorkspaceListEmptyDetail } from "../layout/workspace/WorkspaceListEmptyDetail";
 import { WorkspaceListHeader } from "../layout/workspace/WorkspaceListHeader";
 import { buildHomeListFilterMenuItems } from "./home-list-filter-menu";
+import { renderProjectFilterIcon } from "./projectFilterIcon";
 
 export function HomeRouteScreen() {
   const nativePrimaryColumn = use(NativePrimaryColumnContext);
@@ -142,6 +143,7 @@ export function HomeRouteScreen() {
       ).map((scope) => ({
         key: scope.key,
         label: scope.title,
+        renderIcon: renderProjectFilterIcon(scope.representative),
       })),
     [listOptions.projectGroupingMode, projects, selectedEnvironmentId],
   );

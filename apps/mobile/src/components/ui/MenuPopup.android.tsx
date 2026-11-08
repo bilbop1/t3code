@@ -9,21 +9,21 @@ import {
 } from "@expo/ui/jetpack-compose";
 import { defaultMinSize, padding, size, width } from "@expo/ui/jetpack-compose/modifiers";
 import type { MenuAction } from "@react-native-menu/menu";
+import type { ReactNode } from "react";
 import { Pressable } from "react-native";
 import { resolveScaledTextRole } from "../../lib/appearancePreferences";
 
 import { useAndroidControlSizing } from "./useAndroidControlSizing";
 import { useAppearancePreferences } from "../../features/settings/appearance/AppearancePreferencesProvider";
 import type { MenuPopupProps } from "./MenuPopup";
+import type { MenuActionWithLeading } from "./Menu.types";
 import { isAppSymbolName, SymbolView, type AppSymbolName } from "./AppSymbol";
 
 // The Compose glyph host consumes touches; run the action here and keep accessibility on the row.
-function MenuIcon(props: {
-  readonly name: AppSymbolName;
-  readonly color?: MenuAction["imageColor"];
+function MenuGlyphHost(props: {
   readonly onPress: () => void;
-  readonly destructive?: boolean;
   readonly disabled?: boolean;
+  readonly children: (size: number) => ReactNode;
 }) {
   const { iconSize } = useAndroidControlSizing();
   return (
@@ -36,6 +36,22 @@ function MenuIcon(props: {
         style={{ width: iconSize, height: iconSize }}
         importantForAccessibility="no-hide-descendants"
       >
+        {props.children(iconSize)}
+      </Pressable>
+    </RNHostView>
+  );
+}
+
+function MenuIcon(props: {
+  readonly name: AppSymbolName;
+  readonly color?: MenuAction["imageColor"];
+  readonly onPress: () => void;
+  readonly destructive?: boolean;
+  readonly disabled?: boolean;
+}) {
+  return (
+    <MenuGlyphHost onPress={props.onPress} disabled={props.disabled}>
+      {(iconSize) => (
         <SymbolView
           name={props.name}
           size={iconSize}
@@ -50,8 +66,8 @@ function MenuIcon(props: {
                     : "accent-foreground",
               })}
         />
-      </Pressable>
-    </RNHostView>
+      )}
+    </MenuGlyphHost>
   );
 }
 
@@ -88,64 +104,76 @@ export function MenuPopupItems(
           {props.title}
         </Text>
       ) : null}
-      {props.actions.map((action, index) => (
-        <DropdownMenuItem
-          key={action.id ?? `${index}-${action.title}`}
-          enabled={!action.attributes?.disabled}
-          modifiers={itemModifiers}
-          onClick={() => props.onPress(action)}
-        >
-          {action.image && isAppSymbolName(action.image) ? (
-            <DropdownMenuItem.LeadingIcon>
-              <MenuIcon
-                name={action.image}
-                color={action.imageColor}
-                onPress={() => props.onPress(action)}
-                destructive={action.attributes?.destructive}
-                disabled={action.attributes?.disabled}
-              />
-            </DropdownMenuItem.LeadingIcon>
-          ) : null}
-          <DropdownMenuItem.Text>
-            <Column>
-              <Text
-                style={{ typography: "bodyLarge", ...body }}
-                color={
-                  action.attributes?.disabled
-                    ? muted
-                    : action.attributes?.destructive
-                      ? colors["--color-danger-foreground"]
-                      : foreground
-                }
-              >
-                {action.title}
-              </Text>
-              {action.subtitle ? (
-                <Text color={muted} style={{ typography: "bodySmall", ...caption }}>
-                  {action.subtitle}
+      {props.actions.map((action, index) => {
+        const renderLeading = (action as MenuActionWithLeading).renderLeading;
+        return (
+          <DropdownMenuItem
+            key={action.id ?? `${index}-${action.title}`}
+            enabled={!action.attributes?.disabled}
+            modifiers={itemModifiers}
+            onClick={() => props.onPress(action)}
+          >
+            {renderLeading ? (
+              <DropdownMenuItem.LeadingIcon>
+                <MenuGlyphHost
+                  onPress={() => props.onPress(action)}
+                  disabled={action.attributes?.disabled}
+                >
+                  {renderLeading}
+                </MenuGlyphHost>
+              </DropdownMenuItem.LeadingIcon>
+            ) : action.image && isAppSymbolName(action.image) ? (
+              <DropdownMenuItem.LeadingIcon>
+                <MenuIcon
+                  name={action.image}
+                  color={action.imageColor}
+                  onPress={() => props.onPress(action)}
+                  destructive={action.attributes?.destructive}
+                  disabled={action.attributes?.disabled}
+                />
+              </DropdownMenuItem.LeadingIcon>
+            ) : null}
+            <DropdownMenuItem.Text>
+              <Column>
+                <Text
+                  style={{ typography: "bodyLarge", ...body }}
+                  color={
+                    action.attributes?.disabled
+                      ? muted
+                      : action.attributes?.destructive
+                        ? colors["--color-danger-foreground"]
+                        : foreground
+                  }
+                >
+                  {action.title}
                 </Text>
-              ) : null}
-            </Column>
-          </DropdownMenuItem.Text>
-          {(action.subactions?.length ?? 0) > 0 ? (
-            <DropdownMenuItem.TrailingIcon>
-              <MenuIcon
-                name="chevron.right"
-                onPress={() => props.onPress(action)}
-                disabled={action.attributes?.disabled}
-              />
-            </DropdownMenuItem.TrailingIcon>
-          ) : action.state === "on" ? (
-            <DropdownMenuItem.TrailingIcon>
-              <MenuIcon
-                name="checkmark"
-                onPress={() => props.onPress(action)}
-                disabled={action.attributes?.disabled}
-              />
-            </DropdownMenuItem.TrailingIcon>
-          ) : null}
-        </DropdownMenuItem>
-      ))}
+                {action.subtitle ? (
+                  <Text color={muted} style={{ typography: "bodySmall", ...caption }}>
+                    {action.subtitle}
+                  </Text>
+                ) : null}
+              </Column>
+            </DropdownMenuItem.Text>
+            {(action.subactions?.length ?? 0) > 0 ? (
+              <DropdownMenuItem.TrailingIcon>
+                <MenuIcon
+                  name="chevron.right"
+                  onPress={() => props.onPress(action)}
+                  disabled={action.attributes?.disabled}
+                />
+              </DropdownMenuItem.TrailingIcon>
+            ) : action.state === "on" ? (
+              <DropdownMenuItem.TrailingIcon>
+                <MenuIcon
+                  name="checkmark"
+                  onPress={() => props.onPress(action)}
+                  disabled={action.attributes?.disabled}
+                />
+              </DropdownMenuItem.TrailingIcon>
+            ) : null}
+          </DropdownMenuItem>
+        );
+      })}
     </>
   );
 }

@@ -1,4 +1,5 @@
 import type { EnvironmentId } from "@t3tools/contracts";
+import type { ReactNode } from "react";
 
 import type { AppBarMenuItem } from "../../components/ui/AppBar.types";
 
@@ -10,6 +11,8 @@ export interface HomeListFilterMenuEnvironment {
 export interface HomeListFilterMenuProject {
   readonly key: string;
   readonly label: string;
+  /** Android: the project's icon in the menu row. */
+  readonly renderIcon?: (size: number) => ReactNode;
 }
 
 export function buildHomeListFilterMenuItems(props: {
@@ -57,6 +60,7 @@ export function buildHomeListFilterMenuItems(props: {
         ...props.projects.map((project) => ({
           id: `project:${project.key}`,
           title: project.label,
+          ...(project.renderIcon ? { renderLeading: project.renderIcon } : {}),
           selected: props.selectedProjectKey === project.key,
           onPress: () => props.onProjectChange(project.key),
         })),
